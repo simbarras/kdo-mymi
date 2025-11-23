@@ -18,7 +18,7 @@
     }
 
     body {
-      min-height: 100vh;
+      min-height: 110vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -215,7 +215,12 @@
     const btn = document.getElementById("wallet-btn");
     btn.addEventListener("click", () => {
       triggerConfetti();
-      window.location.href = PASS_URL;
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.disabled = false;
+        window.location.href = PASS_URL;
+      }, 1000);
+      return;
     });
 
     // Petit confetti maison (sans librairie externe)
