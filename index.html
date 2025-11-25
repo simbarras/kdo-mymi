@@ -156,6 +156,12 @@
       color: #9ca3af;
     }
 
+    .countdown {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
     canvas#confetti-canvas {
       position: fixed;
       inset: 0;
@@ -178,7 +184,29 @@
 <body>
   <canvas id="confetti-canvas"></canvas>
 
-  <main class="card">
+  <!-- Carte VERROUILLÉE avant la date -->
+  <main class="card" id="locked-card" style="display:none;">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      <span>Bientôt… ⏳</span>
+    </div>
+
+    <h1>Pas encore l'heure 😇</h1>
+    <p class="subtitle">
+      Il y a une surprise qui t’attend ici, mais tu dois encore patienter un peu…
+    </p>
+
+    <p class="countdown" id="countdown">
+      Calcul du temps restant…
+    </p>
+
+    <p class="note">
+      Reviens le jour J pour découvrir ton cadeau. 💌
+    </p>
+  </main>
+
+  <!-- Carte CADEAU, visible seulement après la date -->
+  <main class="card" id="gift-card">
     <div class="badge">
       <span class="badge-dot"></span>
       <span>Cadeau pour tes 25 ans 🎁</span>
@@ -209,19 +237,84 @@
   </main>
 
   <script>
+    // 👉 Remplace cette constante par la date de déverrouillage
+    // Format : new Date("YYYY-MM-DDTHH:MM:SS");
+    // (heure locale de l'appareil, par ex : minuit le 2025-12-25)
+    const REVEAL_DATE = new Date("2025-12-11T00:00:00");
+
     // 👉 Remplace cette constante par l'URL de ton vrai fichier .pkpass
     const PASS_URL = "mymi-hyrox.pkpass";
 
     const btn = document.getElementById("wallet-btn");
-    btn.addEventListener("click", () => {
-      triggerConfetti();
-      btn.disabled = true;
-      setTimeout(() => {
-        btn.disabled = false;
-        window.location.href = PASS_URL;
-      }, 1000);
-      return;
+    const giftCard = document.getElementById("gift-card");
+    const lockedCard = document.getElementById("locked-card");
+    const countdownEl = document.getElementById("countdown");
+
+    // Montre soit la carte cadeau, soit la carte verrouillée
+    function updateVisibility() {
+      const now = new Date();
+      if (now < REVEAL_DATE) {
+        // Trop tôt → carte cachée, écran d'attente visible
+        giftCard.style.display = "none";
+        lockedCard.style.display = "block";
+      } else {
+        // Date atteinte → on montre la carte cadeau
+        lockedCard.style.display = "none";
+        giftCard.style.display = "block";
+      }
+    }
+
+    // Met à jour le compte à rebours
+    function updateCountdown() {
+      if (!countdownEl) return;
+
+      const now = new Date();
+      const diff = REVEAL_DATE - now;
+
+      if (diff <= 0) {
+        countdownEl.textContent = "C'est le moment ! Recharge la page pour voir ton cadeau 🎉";
+        updateVisibility();
+        return;
+      }
+
+      const seconds = Math.floor(diff / 1000);
+      const days = Math.floor(seconds / (60 * 60 * 24));
+      const hours = Math.floor((seconds % (60 * 60 * 24)) / (60 * 60));
+      const minutes = Math.floor((seconds % (60 * 60)) / 60);
+
+      let parts = [];
+      if (days > 0) parts.push(`${days} jour${days > 1 ? "s" : ""}`);
+      if (hours > 0) parts.push(`${hours} h`);
+      if (minutes > 0) parts.push(`${minutes} min`);
+
+      if (parts.length === 0) {
+        parts.push("moins d'une minute");
+      }
+
+      countdownEl.textContent = `Plus que ${parts.join(" ")} avant la surprise 💫`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      updateVisibility();
+      updateCountdown();
+      // Mise à jour du compte à rebours toutes les 30s
+      setInterval(() => {
+        updateCountdown();
+        updateVisibility();
+      }, 30000);
     });
+
+    // Gestion du bouton Wallet
+    if (btn) {
+      btn.addEventListener("click", () => {
+        triggerConfetti();
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.disabled = false;
+          window.location.href = PASS_URL;
+        }, 1000);
+      });
+    }
 
     // Petit confetti maison (sans librairie externe)
     const canvas = document.getElementById("confetti-canvas");
@@ -232,7 +325,7 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth * window.devicePixelRatio;
       canvas.height = window.innerHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
     }
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
