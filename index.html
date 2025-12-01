@@ -308,11 +308,7 @@
     if (btn) {
       btn.addEventListener("click", () => {
         triggerConfetti();
-        btn.disabled = true;
-        setTimeout(() => {
-          btn.disabled = false;
-          window.location.href = PASS_URL;
-        }, 1000);
+        window.location.href = PASS_URL;
       });
     }
 
